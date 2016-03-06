@@ -16,6 +16,7 @@
 #include "g760-camera.dtsi"
 #include "g760-nfc.dtsi"
 #include "g760-fac.dtsi"
+#include "g760-tp.dtsi"
 
 &tlmm_pinmux {
 
