@@ -49,6 +49,32 @@
 		};
 	};
 
+	ak8789_int_pin {
+                qcom,pins = <&gp 1>, <&gp 69>;
+                qcom,num-grp-pins = <2>;
+                qcom,pin-func = <0>;
+                label = "ak8789_int_pin";
+                ak8789_default: ak8789_default {
+                          drive-strength = <2>;
+                          bias-pull-up;
+		};
+	};
+
+	apds9930_int_pin {
+                qcom,pins = <&gp 113>;
+                qcom,pin-func = <0>;
+                qcom,num-grp-pins = <1>;
+                label = "apds9930-irq";
+                apds9930_default: apds9930_default {
+                        drive-strength = <6>;
+                        bias-pull-up;
+                };
+                apds9930_sleep: apds9930_sleep {
+                        drive-strength = <2>;
+                        bias-pull-down;
+                };
+        };
+
 	lis3dh_int1_pin {
 		qcom,pins = <&gp 115>;
 		qcom,num-grp-pins = <1>;
@@ -195,6 +221,20 @@
 		gs,i2c-sda-gpio = <&msm_gpio 6 0x0>;
 	};
 };
+
+/{
+        huawei_hall_sensor{
+                compatible = "huawei,hall-ak8789";
+                reg = <0x0 0x8789>;
+                pinctrl-names = "default";
+                pinctrl-0 = <&ak8789_default>;
+                huawei,hall_gpio_config_cover = <&msm_gpio 69 0x2>;
+                huawei,hall_gpio_config_carmode = <&msm_gpio 1 0x2>;
+                hall_poles = <2>;
+                status = "ok";
+        };
+};
+
 
 &mdss_mdp {
 	qcom,mdss-pref-prim-intf = "dsi";
