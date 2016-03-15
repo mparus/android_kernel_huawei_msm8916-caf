@@ -126,31 +126,31 @@
 		pinctrl-1 = <&akm_sleep>;
 		vdd-supply = <&pm8916_l17>;
 		vio-supply = <&pm8916_l6>;
-		akm,layout = <0x3>;
+		akm,layout = <0x7>;
 		akm,gpio_rstn = <&msm_gpio 36 0x0>;
 		akm,auto-report;
 	};
 
-	avago@39 {
-		compatible = "avago,apds9930";
-		reg = <0x39>;
-		pinctrl-names = "default","sleep";
-		pinctrl-0 = <&apds99xx_default>;
-		pinctrl-1 = <&apds99xx_sleep>;
-		interrupt-parent = <&msm_gpio>;
-		interrupts = <113 0x2002>;
-		vdd-supply = <&pm8916_l17>;
-		vio-supply = <&pm8916_l6>;
-		avago,irq-gpio = <&msm_gpio 113 0x2002>;
-		avago,ps-threshold = <600>;
-		avago,ps-hysteresis-threshold = <500>;
-		avago,ps-pulse = <8>;
-		avago,ps-pgain = <0>;
-		avago,als-B = <186>;
-		avago,als-C = <75>;
-		avago,als-D = <129>;
-		avago,ga-value = <313>;
-	};
+       avago@39 {
+               compatible = "avago,apds9930";
+               reg = <0x39>;
+               pinctrl-names = "default","sleep";
+               pinctrl-0 = <&apds99xx_default>;
+               pinctrl-1 = <&apds99xx_sleep>;
+               interrupt-parent = <&msm_gpio>;
+               interrupts = <113 0x2002>;
+               vdd-supply = <&pm8916_l17>;
+               vio-supply = <&pm8916_l6>;
+               avago,irq-gpio = <&msm_gpio 113 0x2002>;
+               avago,ps-threshold = <600>;
+               avago,ps-hysteresis-threshold = <500>;
+               avago,ps-pulse = <8>;
+               avago,ps-pgain = <0>;
+               avago,als-B = <186>;
+               avago,als-C = <75>;
+               avago,als-D = <129>;
+               avago,ga-value = <313>;
+       };
 
 	st@18 {
 		compatible = "st,lis3dh";
@@ -416,15 +416,15 @@
 };
 
 &sdc2_cd_on {
-	/delete-property/ bias-pull-up;
-	bias-disable;
+        /delete-property/ bias-pull-up;
+        bias-disable;
 };
 
 &sdhc_2 {
-	qcom,vdd-always-on;
-	qcom,vdd-lpm-sup;
+        qcom,vdd-always-on;
+        qcom,vdd-lpm-sup;
 
-	qcom,vdd-current-level = <4000 400000>;
+        qcom,vdd-current-level = <4000 400000>;
 };
 
 &mdss_dsi0 {
