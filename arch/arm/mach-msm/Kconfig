@@ -1050,4 +1050,11 @@ config FSM9900_GSM_NL
 	  The serial port connection can be established to communicate with the
 	  GSM NL module.
 
+config HUAWEI_KERNEL
+        bool "Use huawei code"
+        default n
+        help
+          use huawei code
+
+
 endif

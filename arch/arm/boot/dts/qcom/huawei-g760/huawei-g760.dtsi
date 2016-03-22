@@ -17,6 +17,7 @@
 #include "g760-nfc.dtsi"
 #include "g760-fac.dtsi"
 #include "g760-tp.dtsi"
+#include "g760-sdcard.dtsi"
 
 &tlmm_pinmux {
 
@@ -413,18 +414,6 @@
 	chan@30 {
 		qcom,scale-function = <6>;
 	};
-};
-
-&sdc2_cd_on {
-        /delete-property/ bias-pull-up;
-        bias-disable;
-};
-
-&sdhc_2 {
-        qcom,vdd-always-on;
-        qcom,vdd-lpm-sup;
-
-        qcom,vdd-current-level = <4000 400000>;
 };
 
 &mdss_dsi0 {
