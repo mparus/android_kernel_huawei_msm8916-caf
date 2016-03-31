@@ -68,6 +68,15 @@
 
 #define MAX_AUX_CODECS	2
 
+/*for cherry-vd SPK-PA ext buck-boost ctl*/
+#define DEFUALT_SPK_SWITCH_VALUE 0x0
+#define SPK_ON 1
+#define GPIO_PULL_UP_FLAG 1
+#define GPIO_PULL_DOWN_FLAG 0
+
+static int spk_en_gpio = 0;
+static int ext_spk_switch = DEFUALT_SPK_SWITCH_VALUE;
+
 enum btsco_rates {
 	RATE_8KHZ_ID,
 	RATE_16KHZ_ID,
@@ -1045,6 +1054,95 @@ static int msm_btsco_rate_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+/* Cherry_VD */
+/* The function to pull up GPIO 0 to enable SPK_EXT_Boost*/
+static void spk_gpio_on(void)
+{
+	int ret = 0;
+
+	if (spk_en_gpio < 0)
+	{
+		pr_err("%s: spk_en_gpio is negative\n", __func__);
+		return;
+	}
+
+	ret = gpio_request(spk_en_gpio, "spk_en_gpio");
+	if (ret)
+	{
+		pr_err("%s: Failed to configure spk enable "
+			"gpio %u\n", __func__, spk_en_gpio);
+		return;
+	}
+
+	pr_debug("%s: Enable SPK gpio %u\n", __func__, spk_en_gpio);
+	gpio_direction_output(spk_en_gpio, GPIO_PULL_UP_FLAG);
+}
+
+/* The function to pull down GPIO 0 to disable SPK_EXT_Boost*/
+static void spk_gpio_off(void)
+{
+	if (spk_en_gpio < 0)
+	{
+ 		pr_err("%s: spk_en_gpio is negative\n", __func__);
+		return;
+	}
+
+	pr_debug("%s: Pull down and free spk enable gpio %u\n",
+			__func__, spk_en_gpio);
+
+	gpio_direction_output(spk_en_gpio, GPIO_PULL_DOWN_FLAG);
+	gpio_free(spk_en_gpio);
+}
+
+static const char *spk_switch_text[] = {"OFF","ON"};
+
+static const struct soc_enum ext_spk_switch_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spk_switch_text),
+						spk_switch_text),
+};
+
+/* The function to get SPK status */
+static int ext_spk_switch_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	if(NULL == kcontrol || NULL == ucontrol)
+	{
+		pr_err("%s: input pointer is null\n", __func__);
+	}
+
+	pr_debug("%s: ext_spk_switch = %d\n", __func__,
+			 ext_spk_switch);
+	ucontrol->value.integer.value[0] = ext_spk_switch;
+	return 0;
+}
+
+/* The function to set SPK status */
+static int ext_spk_switch_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+	if(NULL == kcontrol || NULL == ucontrol)
+	{
+		pr_err("%s: input pointer is null\n", __func__);
+	}
+
+	ext_spk_switch = ucontrol->value.integer.value[0];
+	pr_debug("%s: ext_spk_switch = %d"
+			" ucontrol->value.integer.value[0] = %d\n", __func__,
+			ext_spk_switch,
+			 (int) ucontrol->value.integer.value[0]);
+	if(ext_spk_switch)
+	{
+		spk_gpio_on();
+		ret = SPK_ON;
+	}
+	else
+	{
+		spk_gpio_off();
+	}
+	return ret;
+}
+
 static const struct soc_enum msm_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, rx_bit_format_text),
 	SOC_ENUM_SINGLE_EXT(4, mi2s_tx_ch_text),
@@ -1071,6 +1169,9 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 		     msm_btsco_rate_get, msm_btsco_rate_put),
 	SOC_ENUM_EXT("RX SampleRate", msm_snd_enum[3],
 			pri_rx_sample_rate_get, pri_rx_sample_rate_put),
+	/* to add Cherry_vd */
+	SOC_ENUM_EXT("SPK",ext_spk_switch_enum[0],
+			ext_spk_switch_get, ext_spk_switch_put),
 };
 
 static int msm8x16_mclk_event(struct snd_soc_dapm_widget *w,
@@ -1623,6 +1724,18 @@ static void *def_msm8x16_wcd_mbhc_cal(void)
 	 * 210-290 == Button 2
 	 * 360-680 == Button 3
 	 */
+#if defined CONFIG_MACH_JALEBI
+	btn_low[0] = 0;
+	btn_high[0] = 150;
+	btn_low[1] = 150;
+	btn_high[1] = 150;
+	btn_low[2] = 150;
+	btn_high[2] = 150;
+	btn_low[3] = 150;
+	btn_high[3] = 150;
+	btn_low[4] = 150;
+	btn_high[4] = 150;
+#else
 	btn_low[0] = 75;
 	btn_high[0] = 75;
 	btn_low[1] = 150;
@@ -1633,6 +1746,7 @@ static void *def_msm8x16_wcd_mbhc_cal(void)
 	btn_high[3] = 450;
 	btn_low[4] = 500;
 	btn_high[4] = 500;
+#endif
 
 	return msm8x16_wcd_cal;
 }
@@ -1793,7 +1907,7 @@ static struct snd_soc_dai_link msm8x16_9326_dai[] = {
 	{ /* FrontEnd DAI Link, CPE Service */
 		.name = "CPE Listen service",
 		.stream_name = "CPE Listen Audio Service",
-		.cpu_dai_name = "msm-dai-q6-mi2s.3",
+		.cpu_dai_name = "CPE_LSM_NOHOST",
 		.platform_name = "msm-cpe-lsm",
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -1802,7 +1916,6 @@ static struct snd_soc_dai_link msm8x16_9326_dai[] = {
 		.ignore_pmdown_time = 1,
 		.codec_dai_name = "tasha_mad1",
 		.codec_name = "tasha_codec",
-		.ops = &msm8x16_quat_mi2s_be_ops,
 	},
 };
 
@@ -2570,12 +2683,34 @@ static bool msm8x16_swap_gnd_mic(struct snd_soc_codec *codec)
 
 	return true;
 }
+#ifdef CONFIG_MACH_JALEBI
+static int msm8x16_ext_spk_pa_init(struct platform_device *pdev,
+		struct msm8916_asoc_mach_data *pdata)
+{
+	int ret = 0;
 
+	pdata->ext_spk_amp_gpio = of_get_named_gpio(pdev->dev.of_node,
+		"qcom,ext-spk-amp-gpio", 0);
+	if (gpio_is_valid(pdata->ext_spk_amp_gpio)) {
+		ret = gpio_request(pdata->ext_spk_amp_gpio, "ext_spk_amp_gpio");
+		if (ret) {
+			pr_err("%s: gpio_request failed for ext_spk_amp_gpio.\n",
+				__func__);
+			return -EINVAL;
+		}
+		gpio_direction_output(pdata->ext_spk_amp_gpio, 0);
+	}
+	return 0;
+}
+#endif
 static int msm8x16_setup_hs_jack(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
 	struct pinctrl *pinctrl;
 
+#ifdef CONFIG_MACH_JALEBI
+	msm8x16_ext_spk_pa_init(pdev, pdata);
+#endif
 	pdata->us_euro_gpio = of_get_named_gpio(pdev->dev.of_node,
 					"qcom,cdc-us-euro-gpios", 0);
 	if (pdata->us_euro_gpio < 0) {
@@ -3154,6 +3289,14 @@ static int msm8x16_asoc_machine_probe(struct platform_device *pdev)
 			ret);
 		goto err;
 	}
+
+	/*Get GPIO num for SPK-PA ext buck-boost ctl*/
+	spk_en_gpio = of_get_named_gpio(pdev->dev.of_node,
+					"qcom,spk-buck-boost", 0);
+	if (spk_en_gpio < 0) {
+		pr_err("%s: failed to get spk_en_gpio\n", __func__);
+	}
+
 	return 0;
 err:
 	if (pdata->vaddr_gpio_mux_spkr_ctl)
@@ -3176,6 +3319,10 @@ static int msm8x16_asoc_machine_remove(struct platform_device *pdev)
 		iounmap(pdata->vaddr_gpio_mux_spkr_ctl);
 	if (pdata->vaddr_gpio_mux_mic_ctl)
 		iounmap(pdata->vaddr_gpio_mux_mic_ctl);
+#ifdef CONFIG_MACH_JALEBI
+	if (gpio_is_valid(pdata->ext_spk_amp_gpio))
+		gpio_free(pdata->ext_spk_amp_gpio);
+#endif
 	if (pdata->vaddr_gpio_mux_pcm_ctl)
 		iounmap(pdata->vaddr_gpio_mux_pcm_ctl);
 	snd_soc_unregister_card(card);
