@@ -3,7 +3,10 @@ ifndef CONFIG_ARM_ARCH_TIMER
 obj-y += timer.o
 endif
 obj-$(CONFIG_USE_OF) += board-dt.o
+obj-$(CONFIG_STATE_NOTIFIER) += state_notifier.o
 obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
+obj-$(CONFIG_MSM_HOTPLUG) += msm_hotplug.o
+obj-$(CONFIG_MSM_LIMITER) += msm_limiter.o
 
 obj-y += acpuclock.o
 obj-$(CONFIG_HW_PERF_EVENTS) += perf_trace_counters.o
