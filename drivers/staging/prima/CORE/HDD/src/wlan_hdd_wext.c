@@ -964,7 +964,7 @@ VOS_STATUS wlan_hdd_get_frame_logs(hdd_adapter_t *pAdapter, v_U8_t flag)
    pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
    if (!pHddCtx->mgmt_frame_logging)
    {
-      hddLog(VOS_TRACE_LEVEL_ERROR,"%s: Frame Logging not init!", __func__);
+      hddLog(VOS_TRACE_LEVEL_DEBUG,"%s: Frame Logging not init!", __func__);
       return VOS_STATUS_E_AGAIN;
    }
 
@@ -6639,6 +6639,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
    *And currently it only checks P2P_CLIENT adapter.
    *P2P_DEVICE and P2P_GO have not been added as of now.
 */
+#ifdef TRACE_RECORD
         case WE_GET_STATES:
         {
             int buf = 0, len = 0;
@@ -6775,6 +6776,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
             wrqu->data.length = strlen(extra)+1;
             break;
         }
+#endif
 
         case WE_GET_CFG:
         {
@@ -9299,7 +9301,7 @@ VOS_STATUS iw_set_pno(struct net_device *dev, struct iw_request_info *info,
     {
         VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
                   "PNO ssid length input is not valid %s",ptr);
-        return VOS_STATUS_E_FAILURE;
+        goto error;
     }
 
     if (( 0 == pnoRequest.aNetworks[i].ssId.length ) ||
@@ -9355,7 +9357,7 @@ VOS_STATUS iw_set_pno(struct net_device *dev, struct iw_request_info *info,
     {
       VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_WARN,
                 "Incorrect number of channels");
-      return VOS_STATUS_E_FAILURE;
+      goto error;
     }
 
     if ( 0 !=  pnoRequest.aNetworks[i].ucChannelCount)
@@ -9367,7 +9369,7 @@ VOS_STATUS iw_set_pno(struct net_device *dev, struct iw_request_info *info,
                            &nOffset))
             {    VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
                            "PNO network channel input is not valid %s",ptr);
-                  return VOS_STATUS_E_FAILURE;
+                  goto error;
             }
             /*Advance to next channel number*/
             ptr += nOffset;

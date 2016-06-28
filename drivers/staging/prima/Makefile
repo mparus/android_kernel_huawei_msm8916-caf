@@ -1,15 +1,15 @@
 MODNAME := wlan
 WLAN_ROOT := drivers/staging/prima
 
+# Feature flags which are not (currently) configurable via Kconfig
+
 # To enable CONFIG_QCOM_ESE_UPLOAD, dependent config
 # CONFIG_QCOM_ESE must be enabled.
 CONFIG_QCOM_ESE := n
 CONFIG_QCOM_ESE_UPLOAD := n
 
-# Feature flags which are not (currently) configurable via Kconfig
-
 #Whether to build debug version
-BUILD_DEBUG_VERSION := 1
+BUILD_DEBUG_VERSION := 0
 
 #Enable this flag to build driver in diag version
 BUILD_DIAG_VERSION := 1
@@ -603,9 +603,6 @@ endif
 CDEFINES += -DFEATURE_WLAN_CH_AVOID
 CDEFINES += -DWLAN_FEATURE_AP_HT40_24G
 
-# Some kernel include files are being moved.  Check to see if
-# the old version of the files are present
-
 ifeq ($(EXISTS_MSM_SMD),1)
 CDEFINES += -DEXISTS_MSM_SMD
 endif
@@ -615,7 +612,7 @@ CDEFINES += -DEXISTS_MSM_SMSM
 endif
 
 # Fix build for GCC 4.7
-EXTRA_CFLAGS += -Wno-maybe-uninitialized -Wno-unused-function
+EXTRA_CFLAGS += -Wno-maybe-uninitialized -Wno-unused-function -Wno-unused-variable
 
 KBUILD_CPPFLAGS += $(CDEFINES)
 
