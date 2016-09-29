@@ -63,4 +63,10 @@ config MACH_CHE1_L04
 	help
 	  Support for Huawei CHE1_L04 variant
 
+config MACH_G760_L01
+	bool "G620S_L01 board"
+	select MACH_HUAWEI_MSM8916
+	help
+	  Support for Huawei GG760_L01 variant
+
 endmenu
