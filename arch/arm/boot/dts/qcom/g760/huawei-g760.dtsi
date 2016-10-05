@@ -17,7 +17,6 @@
 #include "g760-nfc.dtsi"
 #include "g760-fac.dtsi"
 #include "g760-tp.dtsi"
-#include "g760-sdcard.dtsi"
 #include "g760-audio.dtsi"
 
 &tlmm_pinmux {
@@ -423,6 +422,24 @@
 &mdss_dsi0 {
 	qcom,regulator-ldo-mode;
 	qcom,platform-regulator-settings = [02 09 03 00 20 00 01];
+};
+
+&sdc2_cd_on {
+        /delete-property/ bias-pull-up;
+        bias-disable;
+};
+
+&sdhc_2 {
+        qcom,vdd-lpm-sup;
+        qcom,vdd-current-level = <4000 400000>;
+
+        interrupt-map = <0 &intc 0 125 0
+                1 &intc 0 221 0
+                2 &msm_gpio 38 0>;
+        cd-gpios = <&msm_gpio 38 0x0>;
+        /delete-property/ qcom,vdd-io-always-on;
+        /* As the limit of hardware, remove the support of uhs */
+        qcom,vdd-io-voltage-level = <2950000 2950000>;
 };
 
 #include "hw-default-lcd.dtsi"
