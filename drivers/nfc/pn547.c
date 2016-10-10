@@ -1,4 +1,5 @@
-/*
+/* Copyright (C) 2010 NXP Semiconductors
+ * Copyright (C) 2016 @surdu_petru
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-
+#include <linux/async.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
@@ -39,7 +40,6 @@
 
 #include <linux/regulator/consumer.h>
 #include <linux/miscdevice.h>
-//#include <mach/gpiomux.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include <linux/time.h>
@@ -87,7 +87,7 @@ struct pn547_dev	{
 	unsigned int 		firm_gpio;
 	unsigned int		irq_gpio;
 	unsigned int		clk_req_gpio;
-	bool				irq_enabled;
+	bool			irq_enabled;
 	spinlock_t		irq_enabled_lock;
 	bool		       	do_reading;
 	struct wake_lock   wl;
@@ -726,7 +726,7 @@ static ssize_t nfc_sim_status_show(struct device *dev, struct device_attribute *
 		}
 		break;
 	}
-	
+
 	pr_info("%s: status=%d\n", __func__,status);
 	return (ssize_t)(snprintf(buf, MAX_ATTRIBUTE_BUFFER_SIZE-1,"%d\n", status));
 }
@@ -949,7 +949,6 @@ static struct device_attribute pn547_attr[] ={
 	__ATTR(nfc_sim_status, 0444, nfc_sim_status_show, NULL),
 	__ATTR(rd_nfc_sim_status, 0444, rd_nfc_sim_status_show, NULL),
 	__ATTR(nfc_enable_status, 0664, nfc_enable_status_show, nfc_enable_status_store),
-	//__ATTR(nfc_check_lcd_status, 0444, nfc_check_lcd_status_show, NULL),
 	__ATTR(nfc_card_num, 0444, nfc_card_num_show, NULL),
 	__ATTR(nfc_chip_type, 0444, nfc_chip_type_show, NULL),
 };
@@ -1188,29 +1187,6 @@ static int pn547_parse_dt(struct device *dev,
 err:
 	return ret;
 }
-/*
-static struct gpiomux_setting nfc_irq_act = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-static struct gpiomux_setting nfc_irq_sus = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-static struct gpiomux_setting nfc_fwdl_act = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-static struct gpiomux_setting nfc_fwdl_sus = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-*/
-
 /*FUNCTION: pn547_gpio_request
   *DESCRIPTION: pn547_gpio_request, nfc gpio configuration
   *Parameters
@@ -1222,7 +1198,6 @@ static int pn547_gpio_request(struct device *dev,
 				struct pn547_i2c_platform_data *pdata)
 {
 	int ret;
-//	int gpio_config=0;
 
 	pr_info("%s : pn547_gpio_request enter\n", __func__);
 
@@ -1231,10 +1206,7 @@ static int pn547_gpio_request(struct device *dev,
 	if(ret){
 		goto err_irq;
 	}
-//	msm_gpiomux_write(pdata->irq_gpio,GPIOMUX_ACTIVE, &nfc_irq_act, NULL);
-//	msm_gpiomux_write(pdata->irq_gpio,GPIOMUX_SUSPENDED, &nfc_irq_sus, NULL);
-//	gpio_config = GPIO_CFG(pdata->irq_gpio, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA);
-//	gpio_tlmm_config(gpio_config, GPIO_CFG_ENABLE);
+
 	ret = gpio_direction_input(pdata->irq_gpio);
 	if(ret){
 		goto err_fwdl_en;
@@ -1245,10 +1217,7 @@ static int pn547_gpio_request(struct device *dev,
 	if(ret){
 		goto err_fwdl_en;
 	}
-//	msm_gpiomux_write(pdata->fwdl_en_gpio,GPIOMUX_ACTIVE, &nfc_fwdl_act, NULL);
-//	msm_gpiomux_write(pdata->fwdl_en_gpio,GPIOMUX_SUSPENDED, &nfc_fwdl_sus, NULL);
-//	gpio_config = GPIO_CFG(pdata->fwdl_en_gpio, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA);
-//	gpio_tlmm_config(gpio_config, GPIO_CFG_ENABLE);
+
 	ret = gpio_direction_output(pdata->fwdl_en_gpio,0);
 	if(ret){
 		goto err_ven;
@@ -1365,7 +1334,6 @@ static int pn547_probe(struct i2c_client *client,
 		goto err_gpio_request;
 	}
 
-
 	/*config nfc gpio*/
 	ret = pn547_gpio_request(&client->dev, platform_data);
 	if (ret) {
@@ -1408,7 +1376,7 @@ static int pn547_probe(struct i2c_client *client,
 	init_waitqueue_head(&pn547_dev->read_wq);
 	mutex_init(&pn547_dev->read_mutex);
 	spin_lock_init(&pn547_dev->irq_enabled_lock);
-       wake_lock_init(&pn547_dev->wl,WAKE_LOCK_SUSPEND,"nfc_locker");
+        wake_lock_init(&pn547_dev->wl,WAKE_LOCK_SUSPEND,"nfc_locker");
 	pn547_dev->pn547_device.minor = MISC_DYNAMIC_MINOR;
 	pn547_dev->pn547_device.name = "pn544";
 	pn547_dev->pn547_device.fops = &pn547_dev_fops;
@@ -1497,7 +1465,7 @@ static int pn547_remove(struct i2c_client *client)
 }
 
 static const struct i2c_device_id pn547_id[] = {
-	{ "pn547", 0 },
+	{ PN547_DRV_NAME, 0 },
 	{ }
 };
 
@@ -1512,7 +1480,7 @@ static struct i2c_driver pn547_driver = {
 	.remove		= pn547_remove,
 	.driver		= {
 		.owner	= THIS_MODULE,
-		.name	= "pn547",
+		.name	= PN547_DRV_NAME,
 		.of_match_table	= pn547_match_table,
 	},
 };
@@ -1521,10 +1489,25 @@ static struct i2c_driver pn547_driver = {
  * module load/unload record keeping
  */
 
+static void async_dev_init(void *data, async_cookie_t cookie)
+{
+    int ret = 0;
+    pr_info(PN547_DRV_NAME ": Start async init\n");
+
+    ret = i2c_add_driver(&pn547_driver);
+    if (ret < 0) {
+        pr_err("[NFC]failed to i2c_add_driver\n");
+    }
+    pr_info(PN547_DRV_NAME ": Loading PN547 driver Success! \n");
+    return;
+}
+
 static int __init pn547_dev_init(void)
 {
-	pr_info("### %s begin! \n",__func__);
-	return i2c_add_driver(&pn547_driver);
+    pr_info("Loading PN547 driver\n");
+    async_schedule(async_dev_init, NULL);
+
+    return 0;
 }
 module_init(pn547_dev_init);
 

@@ -442,4 +442,8 @@
         qcom,vdd-io-voltage-level = <2950000 2950000>;
 };
 
+&pm8916_rtc {
+       qcom,qpnp-rtc-alarm-pwrup = <1>;
+};
+
 #include "hw-default-lcd.dtsi"
